@@ -1,0 +1,11 @@
+[package]
+name = "cli"
+description = "A ledger-like plain text account CLI with superpowers"
+version = "0.1.0"
+authors = ["Fran González <fgzv@outlook.com>"]
+edition = "2018"
+
+[dependencies]
+core = { path = "../core" }
+
+seahorse = "1.1.2"
