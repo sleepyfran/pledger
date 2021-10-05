@@ -11,3 +11,6 @@ Cargo.lock
 
 # Ignore all JetBrains stuff
 /.idea/
+
+# Ignore the samples folder. This is just a folder with some sample files that can be used to check the app
+/samples/

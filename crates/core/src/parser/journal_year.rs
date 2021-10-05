@@ -7,7 +7,7 @@ use nom::combinator::{cut, map_res};
 
 /// Attempts to parse a journal year. Handles an upper or lower case `Y` followed by a year and
 /// returns the year.
-fn parse_journal_year(input: &str) -> IResult<&str, u32> {
+pub fn parse(input: &str) -> IResult<&str, u32> {
     context(
         "journal year",
         preceded(
@@ -25,12 +25,12 @@ fn parse_journal_year(input: &str) -> IResult<&str, u32> {
 #[cfg(test)]
 mod tests {
     use nom::{Err, error::Error, error::ErrorKind::{Digit, Tag}};
-    use super::parse_journal_year;
+    use super::parse;
 
     #[test]
     fn parses_lowercase_year() {
         assert_eq!(
-            parse_journal_year("y2021"),
+            parse("y2021"),
             Ok(("", 2021))
         )
     }
@@ -38,7 +38,7 @@ mod tests {
     #[test]
     fn parses_uppercase_year() {
         assert_eq!(
-            parse_journal_year("Y2021"),
+            parse("Y2021"),
             Ok(("", 2021))
         )
     }
@@ -46,7 +46,7 @@ mod tests {
     #[test]
     fn passes_rest_of_input_if_year_parsed() {
         assert_eq!(
-            parse_journal_year("Y2022\nA"),
+            parse("Y2022\nA"),
             Ok(("\nA", 2022))
         )
     }
@@ -54,7 +54,7 @@ mod tests {
     #[test]
     fn errors_when_empty() {
         assert_eq!(
-            parse_journal_year(""),
+            parse(""),
             Err(Err::Error(Error { input: "", code: Tag }))
         )
     }
@@ -62,7 +62,7 @@ mod tests {
     #[test]
     fn errors_when_wrong_tag() {
         assert_eq!(
-            parse_journal_year("X2020"),
+            parse("X2020"),
             Err(Err::Error(Error { input: "X2020", code: Tag }))
         )
     }
@@ -70,12 +70,12 @@ mod tests {
     #[test]
     fn fails_when_invalid_year_tag() {
         assert_eq!(
-            parse_journal_year("YY2020"),
+            parse("YY2020"),
             Err(Err::Failure(Error { input: "Y2020", code: Digit }))
         );
 
         assert_eq!(
-            parse_journal_year("yy1920"),
+            parse("yy1920"),
             Err(Err::Failure(Error { input: "y1920", code: Digit }))
         );
     }
@@ -83,7 +83,7 @@ mod tests {
     #[test]
     fn fails_when_invalid_year() {
         assert_eq!(
-            parse_journal_year("y"),
+            parse("y"),
             Err(Err::Failure(Error { input: "", code: Digit }))
         )
     }
