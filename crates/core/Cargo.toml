@@ -5,3 +5,4 @@ authors = ["Fran González <fgzv@outlook.com>"]
 edition = "2018"
 
 [dependencies]
+nom = "7.0.0"

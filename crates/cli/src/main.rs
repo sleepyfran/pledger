@@ -1,3 +1,5 @@
+mod commands;
+
 use seahorse::{App};
 use std::env;
 
@@ -8,7 +10,7 @@ fn main() {
         .author(env!("CARGO_PKG_AUTHORS"))
         .version(env!("CARGO_PKG_VERSION"))
         .usage("pledger [args]")
-        .action(|c| println!("Hello, {:?}", c.args));
-
+        .command(commands::check::create());
+    
     app.run(args);
 }
