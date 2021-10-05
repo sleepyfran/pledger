@@ -8,4 +8,5 @@ edition = "2018"
 [dependencies]
 core = { path = "../core" }
 
+console = "0.14.1"
 seahorse = "1.1.2"

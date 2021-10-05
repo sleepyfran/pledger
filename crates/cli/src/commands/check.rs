@@ -2,6 +2,9 @@ use core::io::{file, file::FileError};
 use core::parser;
 use seahorse::{Command, Context};
 
+use crate::emoji;
+use crate::io::{self, show_error, show_success};
+
 /// Creates a command that attempts to parse a given journal file and shows the result of the parsing.
 pub fn create() -> Command {
     Command::new("check")
@@ -14,7 +17,7 @@ fn handler(context: &Context) {
     if let Some(file_path) = context.args.first() {
         check_file_path(file_path);
     } else {
-        println!("No file given");
+        io::show_error(emoji::for_error(), "No file given");
     }
 }
 
@@ -24,10 +27,10 @@ fn check_file_path(path: &str) {
         Ok(content) => check_content(content),
         Err(error) => match error {
             FileError::NotFound => {
-                println!("File not found");
+                show_error(emoji::for_search(), format!("File \"{}\" not found", path))
             }
             FileError::Unknown => {
-                println!("Unknown error while reading the file");
+                show_error(emoji::for_error(), "Unknown error while reading the file");
             }
         },
     }
@@ -35,11 +38,12 @@ fn check_file_path(path: &str) {
 
 fn check_content(content: String) {
     match parser::parse_journal(&content) {
-        Ok(journal) => {
-            println!("{:?}", journal)
+        Ok(_) => {
+            show_success(emoji::for_success(), "The given journal is a valid file");
         }
         Err(error) => {
-            println!("{}", error)
+            show_error(emoji::for_error(), format!("{}", error));
+            std::process::exit(1);
         }
     }
 }
