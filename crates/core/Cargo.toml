@@ -5,4 +5,7 @@ authors = ["Fran González <fgzv@outlook.com>"]
 edition = "2018"
 
 [dependencies]
+chrono = "0.4.19"
 nom = "7.0.0"
+rust_decimal = "1.16"
+rust_decimal_macros = "1.16"
