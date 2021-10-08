@@ -1,8 +1,9 @@
 use chrono::{Date, Utc};
 use rust_decimal::Decimal;
 
-type Payee = String;
-type Year = u32;
+pub type Description = String;
+pub type Payee = String;
+pub type Year = u32;
 
 /// Defines the internal representation of a journal once parsed from a file.
 #[derive(PartialEq)]
@@ -30,7 +31,7 @@ pub struct Posting {
 #[derive(Debug, PartialEq)]
 pub struct Transaction {
     pub date: Date<Utc>,
-    pub description: String,
+    pub description: Description,
     pub payee: Payee,
     pub postings: Vec<Posting>,
 }
