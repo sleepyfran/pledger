@@ -98,9 +98,10 @@ mod test {
     use chrono::{Date, NaiveDate, Utc};
 
     use super::parse;
+    use crate::parser::ast::ParsedDate;
 
-    fn test_date() -> Date<Utc> {
-        Date::<Utc>::from_utc(NaiveDate::from_ymd(2021, 10, 8), Utc)
+    fn test_date() -> ParsedDate {
+        ParsedDate::Full(Date::<Utc>::from_utc(NaiveDate::from_ymd(2021, 10, 8), Utc))
     }
 
     #[test]

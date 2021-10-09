@@ -5,6 +5,14 @@ pub type Description = String;
 pub type Payee = String;
 pub type Year = u32;
 
+#[derive(Debug, PartialEq)]
+pub enum ParsedDate {
+    Full(Date<Utc>),
+    /// Represents dates that omitted the year and were given a default one that should be
+    /// switched to the journal year.
+    Partial(Date<Utc>),
+}
+
 /// Defines the internal representation of a journal once parsed from a file.
 #[derive(PartialEq)]
 pub struct Journal {
@@ -30,7 +38,7 @@ pub struct Posting {
 /// Represents a transaction that happened in an user's account.
 #[derive(Debug, PartialEq)]
 pub struct Transaction {
-    pub date: Date<Utc>,
+    pub date: ParsedDate,
     pub description: Description,
     pub payee: Payee,
     pub postings: Vec<Posting>,
