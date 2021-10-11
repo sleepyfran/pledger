@@ -8,6 +8,8 @@ use nom::Finish;
 
 use self::ast::Transaction;
 
+mod account;
+mod amount;
 mod ast;
 mod common;
 mod journal_year;
