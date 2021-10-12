@@ -37,6 +37,14 @@ pub struct Amount {
     pub currency: CurrencyCode,
 }
 
+/// Describes the different types of sections that can appear.
+#[derive(PartialEq, Debug)]
+pub enum PayeeSectionType {
+    Empty,
+    PayeeOnly(Payee),
+    PayeeAndDescription((Payee, Description)),
+}
+
 /// Defines an account posting, which indicates either a positive or negative transfer to an account.
 #[derive(Debug, PartialEq, Clone)]
 pub struct Posting {

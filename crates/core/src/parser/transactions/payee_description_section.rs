@@ -9,15 +9,7 @@ use nom::{
     IResult,
 };
 
-use crate::parser::ast::{Description, Payee};
-
-/// Describes the different types of sections that can appear.
-#[derive(PartialEq, Debug)]
-pub enum PayeeSectionType {
-    Empty,
-    PayeeOnly(Payee),
-    PayeeAndDescription((Payee, Description)),
-}
+use crate::parser::ast::{Description, Payee, PayeeSectionType};
 
 /// Parses the section that include a payee and a description separated by a vertical bar.
 pub fn parse(input: &str) -> IResult<&str, PayeeSectionType> {

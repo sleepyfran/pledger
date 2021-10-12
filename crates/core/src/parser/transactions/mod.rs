@@ -6,9 +6,7 @@ use nom::error::context;
 use nom::sequence::tuple;
 use nom::IResult;
 
-use self::payee_description_section::PayeeSectionType;
-
-use super::ast::Transaction;
+use super::ast::{PayeeSectionType, Transaction};
 use super::common::date;
 
 pub fn parse(input: &str) -> IResult<&str, Transaction> {
