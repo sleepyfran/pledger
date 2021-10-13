@@ -14,6 +14,13 @@ pub enum ParsedDate {
     Partial(Date<Utc>),
 }
 
+#[derive(Debug, PartialEq, Clone)]
+pub enum JournalElement {
+    Comment,
+    Year(u32),
+    Transaction(Transaction),
+}
+
 /// Defines the internal representation of a journal once parsed from a file.
 #[derive(PartialEq, Clone)]
 pub struct Journal {

@@ -6,20 +6,13 @@ use nom::multi::many_till;
 use nom::sequence::preceded;
 use nom::Finish;
 
-use self::ast::Transaction;
-
 mod account;
 mod amount;
 mod ast;
+mod comment;
 mod common;
 mod journal_year;
 mod transactions;
-
-#[derive(Debug)]
-enum Test {
-    Year(u32),
-    Transaction(Transaction),
-}
 
 /// Attempts to parse a journal from the given content, returning a result specifying
 pub fn parse_journal(content: &str) -> Result<ast::Journal, Error<&str>> {
@@ -27,8 +20,9 @@ pub fn parse_journal(content: &str) -> Result<ast::Journal, Error<&str>> {
         preceded(
             multispace0,
             alt((
-                map(journal_year::parse, Test::Year),
-                map(transactions::parse, Test::Transaction),
+                map(comment::parse, |_| ast::JournalElement::Comment),
+                map(journal_year::parse, ast::JournalElement::Year),
+                map(transactions::parse, ast::JournalElement::Transaction),
             )),
         ),
         eof,
