@@ -1,5 +1,6 @@
 pub mod payee_description_section;
 pub mod posting;
+pub mod status;
 
 use nom::combinator::map;
 use nom::error::context;
@@ -15,10 +16,11 @@ pub fn parse(input: &str) -> IResult<&str, Transaction> {
         map(
             tuple((
                 date::parse,
+                status::parse,
                 payee_description_section::parse,
                 posting::parse_multiple,
             )),
-            |(date, payee_description_section, postings)| {
+            |(date, status, payee_description_section, postings)| {
                 let (payee, description) = match payee_description_section {
                     PayeeSectionType::Empty => ("".to_owned(), "".to_owned()),
                     PayeeSectionType::PayeeOnly(payee) => (payee, "".to_owned()),
@@ -29,6 +31,7 @@ pub fn parse(input: &str) -> IResult<&str, Transaction> {
 
                 Transaction {
                     date,
+                    status,
                     payee,
                     description,
                     postings,

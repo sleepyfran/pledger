@@ -59,10 +59,18 @@ pub struct Posting {
     pub amount: Option<Amount>,
 }
 
+/// Defines the different statuses a transaction can have.
+#[derive(PartialEq, Debug, Clone)]
+pub enum TransactionStatus {
+    Cleared,
+    Pending,
+}
+
 /// Represents a transaction that happened in an user's account.
 #[derive(Debug, PartialEq, Clone)]
 pub struct Transaction {
     pub date: ParsedDate,
+    pub status: TransactionStatus,
     pub description: Description,
     pub payee: Payee,
     pub postings: (Posting, Posting),
