@@ -4,6 +4,7 @@ use rust_decimal::Decimal;
 pub type CurrencyCode = String;
 pub type Description = String;
 pub type Payee = String;
+pub type Tag = String;
 pub type Year = u32;
 
 #[derive(Debug, PartialEq, Clone)]
@@ -72,6 +73,7 @@ pub struct Transaction {
     pub date: ParsedDate,
     pub status: TransactionStatus,
     pub description: Description,
+    pub tags: Vec<Tag>,
     pub payee: Payee,
     pub postings: (Posting, Posting),
 }

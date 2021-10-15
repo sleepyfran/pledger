@@ -1,15 +1,13 @@
 use nom::{
-    branch::alt,
-    bytes::complete::tag,
-    character::complete::{alphanumeric1, line_ending, multispace0, space0},
-    combinator::map,
+    bytes::complete::{tag, take_while1},
+    character::complete::space0,
+    combinator::{map, opt},
     error::context,
-    multi::many_till,
-    sequence::{delimited, preceded, tuple},
+    sequence::{preceded, tuple},
     IResult,
 };
 
-use crate::parser::ast::{Description, Payee, PayeeSectionType};
+use crate::parser::ast::PayeeSectionType;
 
 /// Parses the section that include a payee and a description separated by a vertical bar.
 pub fn parse(input: &str) -> IResult<&str, PayeeSectionType> {
@@ -17,49 +15,33 @@ pub fn parse(input: &str) -> IResult<&str, PayeeSectionType> {
         "payee | description",
         preceded(
             space0,
-            alt((
-                map(line_ending, |_| PayeeSectionType::Empty),
-                map(parse_payee_only, PayeeSectionType::PayeeOnly),
-                map(
-                    parse_payee_with_description,
-                    PayeeSectionType::PayeeAndDescription,
-                ),
-            )),
-        ),
-    )(input)
-}
-
-fn parse_payee_only(input: &str) -> IResult<&str, Payee> {
-    context(
-        "transaction payee",
-        preceded(
-            space0,
             map(
-                many_till(alt((alphanumeric1, space0)), line_ending),
-                |(elements, _)| elements.join(""),
+                tuple((
+                    opt(spaced_alphanumeric1),
+                    opt(tag("|")),
+                    opt(spaced_alphanumeric1),
+                )),
+                |(payee, _, description)| match payee {
+                    Some(payee) => match description {
+                        Some(description) => PayeeSectionType::PayeeAndDescription((
+                            payee.trim().to_owned(),
+                            description.trim().to_owned(),
+                        )),
+                        None => PayeeSectionType::PayeeOnly(payee.trim().to_owned()),
+                    },
+                    None => PayeeSectionType::Empty,
+                },
             ),
         ),
     )(input)
 }
 
-fn parse_payee_with_description(input: &str) -> IResult<&str, (Payee, Description)> {
+fn spaced_alphanumeric1(input: &str) -> IResult<&str, String> {
     context(
-        "transaction payee with description",
+        "spaced alphanumeric",
         map(
-            tuple((
-                map(
-                    many_till(
-                        alt((alphanumeric1, space0)),
-                        delimited(space0, tag("|"), multispace0),
-                    ),
-                    |(elements, _)| elements.join(""),
-                ),
-                map(
-                    many_till(alt((alphanumeric1, space0)), line_ending),
-                    |(elements, _)| elements.join(""),
-                ),
-            )),
-            |(payee, description)| (payee, description),
+            take_while1(|c: char| c.is_alphanumeric() || c == ' '),
+            String::from,
         ),
     )(input)
 }
@@ -70,18 +52,18 @@ mod test {
 
     #[test]
     fn parses_empty_payee_and_description() {
-        assert_eq!(parse("\n"), Ok(("", PayeeSectionType::Empty)))
+        assert_eq!(parse(""), Ok(("", PayeeSectionType::Empty)))
     }
 
     #[test]
     fn parses_valid_input_with_payee_and_no_description() {
         assert_eq!(
-            parse("Test\n"),
+            parse("Test"),
             Ok(("", PayeeSectionType::PayeeOnly("Test".to_owned())))
         );
 
         assert_eq!(
-            parse("Test with spaces\n"),
+            parse("Test with spaces"),
             Ok((
                 "",
                 PayeeSectionType::PayeeOnly("Test with spaces".to_owned())
@@ -92,7 +74,7 @@ mod test {
     #[test]
     fn parses_valid_transaction_with_payee_and_description() {
         assert_eq!(
-            parse("Test | Test description\n"),
+            parse("Test | Test description"),
             Ok((
                 "",
                 PayeeSectionType::PayeeAndDescription((
@@ -103,7 +85,7 @@ mod test {
         );
 
         assert_eq!(
-            parse("Test with spaces | Test description\n"),
+            parse("Test with spaces | Test description"),
             Ok((
                 "",
                 PayeeSectionType::PayeeAndDescription((
