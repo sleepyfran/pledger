@@ -1,9 +1,12 @@
 pub mod payee_description_section;
 pub mod posting;
+pub mod status;
+pub mod tags;
 
-use nom::combinator::map;
+use nom::character::complete::{line_ending, space0};
+use nom::combinator::{map, opt};
 use nom::error::context;
-use nom::sequence::tuple;
+use nom::sequence::{preceded, tuple};
 use nom::IResult;
 
 use super::ast::{PayeeSectionType, Transaction};
@@ -15,10 +18,13 @@ pub fn parse(input: &str) -> IResult<&str, Transaction> {
         map(
             tuple((
                 date::parse,
+                status::parse,
                 payee_description_section::parse,
+                preceded(space0, opt(tags::parse)),
+                line_ending,
                 posting::parse_multiple,
             )),
-            |(date, payee_description_section, postings)| {
+            |(date, status, payee_description_section, tags, _, postings)| {
                 let (payee, description) = match payee_description_section {
                     PayeeSectionType::Empty => ("".to_owned(), "".to_owned()),
                     PayeeSectionType::PayeeOnly(payee) => (payee, "".to_owned()),
@@ -29,8 +35,10 @@ pub fn parse(input: &str) -> IResult<&str, Transaction> {
 
                 Transaction {
                     date,
+                    status,
                     payee,
                     description,
+                    tags: tags.unwrap_or_else(Vec::new),
                     postings,
                 }
             },
