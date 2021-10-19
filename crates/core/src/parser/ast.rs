@@ -1,5 +1,6 @@
 use chrono::{Date, Utc};
 use rust_decimal::Decimal;
+use std::fmt;
 
 pub type CurrencyCode = String;
 pub type Description = String;
@@ -18,16 +19,18 @@ pub enum ParsedDate {
 #[derive(Debug, PartialEq, Clone)]
 pub enum JournalElement {
     Comment,
-    Year(u32),
+    Year(Year),
     Transaction(Transaction),
 }
 
-/// Defines the internal representation of a journal once parsed from a file.
-#[derive(PartialEq, Clone)]
-pub struct Journal {
-    /// Optional year that applies to the whole journal.
-    pub year: Option<Year>,
-    pub transactions: Vec<Transaction>,
+impl fmt::Display for JournalElement {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            JournalElement::Comment => write!(f, "Comment\n"),
+            JournalElement::Year(year) => write!(f, "Year: {}\n", year),
+            JournalElement::Transaction(transaction) => write!(f, "{:?}\n", transaction),
+        }
+    }
 }
 
 /// Represents an account that the journal includes. Accounts are created implicitly through their

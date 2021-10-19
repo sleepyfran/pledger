@@ -15,7 +15,7 @@ mod journal_year;
 mod transactions;
 
 /// Attempts to parse a journal from the given content, returning a result specifying
-pub fn parse_journal(content: &str) -> Result<ast::Journal, Error<&str>> {
+pub fn parse_journal(content: &str) -> Result<Vec<ast::JournalElement>, Error<&str>> {
     many_till(
         preceded(
             multispace0,
@@ -28,13 +28,5 @@ pub fn parse_journal(content: &str) -> Result<ast::Journal, Error<&str>> {
         eof,
     )(content)
     .finish()
-    .map(|(_, result)| {
-        // TODO: Remove once everything is implemented.
-        println!("{:?}", result);
-
-        return ast::Journal {
-            year: Some(0),
-            transactions: Vec::new(),
-        };
-    })
+    .map(|(_, (elements, _))| elements)
 }
