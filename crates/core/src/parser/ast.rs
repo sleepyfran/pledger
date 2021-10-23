@@ -18,6 +18,7 @@ pub enum ParsedDate {
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum JournalElement {
+    Empty,
     Account(Account),
     Comment,
     Year(Year),
@@ -27,6 +28,7 @@ pub enum JournalElement {
 impl fmt::Display for JournalElement {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
+            JournalElement::Empty => write!(f, ""),
             JournalElement::Account(account) => write!(f, "Account: {:?}", account),
             JournalElement::Comment => write!(f, "Comment\n"),
             JournalElement::Year(year) => write!(f, "Year: {}\n", year),

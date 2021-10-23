@@ -28,6 +28,7 @@ pub fn parse_journal(content: &str) -> Result<Vec<ast::JournalElement>, Error<&s
                 map(comment::parse, |_| ast::JournalElement::Comment),
                 map(journal_year::parse, ast::JournalElement::Year),
                 map(transactions::parse, ast::JournalElement::Transaction),
+                map(multispace0, |_| ast::JournalElement::Empty),
             )),
         ),
         eof,
