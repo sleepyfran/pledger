@@ -2,7 +2,7 @@ use nom::branch::alt;
 use nom::bytes::complete::tag;
 use nom::character::complete::{multispace0, space1};
 use nom::combinator::{eof, map};
-use nom::error::Error;
+use nom::error::convert_error;
 use nom::multi::many_till;
 use nom::sequence::{preceded, tuple};
 use nom::Finish;
@@ -16,7 +16,7 @@ mod journal_year;
 mod transactions;
 
 /// Attempts to parse a journal from the given content, returning a result specifying
-pub fn parse_journal(content: &str) -> Result<Vec<ast::JournalElement>, Error<&str>> {
+pub fn parse_journal(content: &str) -> Result<Vec<ast::JournalElement>, String> {
     many_till(
         preceded(
             multispace0,
@@ -35,12 +35,11 @@ pub fn parse_journal(content: &str) -> Result<Vec<ast::JournalElement>, Error<&s
     )(content)
     .finish()
     .map(|(_, (elements, _))| elements)
+    .map_err(|err| convert_error(content, err))
 }
 
 #[cfg(test)]
 mod test {
-    use nom::{error::Error, error::ErrorKind::TakeWhile1};
-
     use super::parse_journal;
 
     use crate::parser::ast;
@@ -60,10 +59,7 @@ mod test {
     fn fails_if_account_does_not_contain_space() {
         assert_eq!(
             parse_journal("accounttest"),
-            Err(Error {
-                input: "accounttest",
-                code: TakeWhile1
-            })
+            Err("0: at line 1, in ManyTill:\naccounttest\n^\n\n".to_owned())
         )
     }
 
@@ -71,10 +67,7 @@ mod test {
     fn fails_if_does_not_contain_account_name() {
         assert_eq!(
             parse_journal("account"),
-            Err(Error {
-                input: "account",
-                code: TakeWhile1
-            })
+            Err("0: at line 1, in ManyTill:\naccount\n^\n\n".to_owned())
         )
     }
 }

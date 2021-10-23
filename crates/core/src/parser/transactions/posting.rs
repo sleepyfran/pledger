@@ -1,7 +1,7 @@
 use nom::{
     character::complete::{line_ending, space0},
     combinator::{map, opt},
-    error::context,
+    error::{context, ContextError, ParseError},
     sequence::{terminated, tuple},
     IResult,
 };
@@ -9,7 +9,9 @@ use nom::{
 use crate::parser::{account, amount, ast::Posting};
 
 /// Attempts to parse multiple postings divided by a line ending.
-pub fn parse_multiple(input: &str) -> IResult<&str, (Posting, Posting)> {
+pub fn parse_multiple<'a, E: ParseError<&'a str> + ContextError<&'a str>>(
+    input: &'a str,
+) -> IResult<&'a str, (Posting, Posting), E> {
     context(
         "postings",
         tuple((
@@ -21,7 +23,9 @@ pub fn parse_multiple(input: &str) -> IResult<&str, (Posting, Posting)> {
 
 /// Attempts to parse a posting, ignoring any white space that comes before and stopping once a line
 /// ending is found.
-pub fn parse_one(input: &str) -> IResult<&str, Posting> {
+pub fn parse_one<'a, E: ParseError<&'a str> + ContextError<&'a str>>(
+    input: &'a str,
+) -> IResult<&'a str, Posting, E> {
     context(
         "posting",
         map(
@@ -65,7 +69,7 @@ mod test {
     fn parses_valid_posting() {
         let (_, receiver_account, amount) = get_test_data();
         assert_eq!(
-            parse_one("test:receiver 4.05 USD"),
+            parse_one::<Error<&str>>("test:receiver 4.05 USD"),
             Ok((
                 "",
                 Posting {
@@ -80,7 +84,7 @@ mod test {
     fn parses_valid_postings() {
         let (sender_account, receiver_account, amount) = get_test_data();
         assert_eq!(
-            parse_multiple("test:receiver 4.05 USD\ntest:sender -4.05 USD\n"),
+            parse_multiple::<Error<&str>>("test:receiver 4.05 USD\ntest:sender -4.05 USD\n"),
             Ok((
                 "",
                 (
@@ -104,7 +108,7 @@ mod test {
     fn parses_valid_postings_without_amount_in_second_posting() {
         let (sender_account, receiver_account, amount) = get_test_data();
         assert_eq!(
-            parse_multiple("test:receiver 4.05 USD\ntest:sender\n"),
+            parse_multiple::<Error<&str>>("test:receiver 4.05 USD\ntest:sender\n"),
             Ok((
                 "",
                 (
@@ -125,7 +129,7 @@ mod test {
     fn parses_valid_postings_without_line_ending_in_second_posting() {
         let (sender_account, receiver_account, amount) = get_test_data();
         assert_eq!(
-            parse_multiple("test:receiver 4.05 USD\ntest:sender"),
+            parse_multiple::<Error<&str>>("test:receiver 4.05 USD\ntest:sender"),
             Ok((
                 "",
                 (
@@ -145,7 +149,7 @@ mod test {
     #[test]
     fn errors_if_posting_begins_with_space() {
         assert_eq!(
-            parse_one(" test:receiver 4.05 USD"),
+            parse_one::<Error<&str>>(" test:receiver 4.05 USD"),
             Err(Err::Error(Error {
                 input: " test:receiver 4.05 USD",
                 code: AlphaNumeric

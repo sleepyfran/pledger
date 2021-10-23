@@ -5,14 +5,19 @@ pub mod tags;
 
 use nom::character::complete::{line_ending, space0};
 use nom::combinator::{map, opt};
-use nom::error::context;
+use nom::error::{context, ContextError, FromExternalError, ParseError};
 use nom::sequence::{preceded, tuple};
 use nom::IResult;
 
 use super::ast::{PayeeSectionType, Transaction};
 use super::common::date;
 
-pub fn parse(input: &str) -> IResult<&str, Transaction> {
+pub fn parse<
+    'a,
+    E: ParseError<&'a str> + ContextError<&'a str> + FromExternalError<&'a str, chrono::ParseError>,
+>(
+    input: &'a str,
+) -> IResult<&'a str, Transaction, E> {
     context(
         "transaction",
         map(

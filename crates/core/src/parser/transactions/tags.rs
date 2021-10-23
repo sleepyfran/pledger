@@ -1,7 +1,7 @@
 use nom::{
     bytes::complete::{tag, take_while1},
     combinator::map,
-    error::context,
+    error::{context, ContextError, ParseError},
     multi::separated_list1,
     sequence::preceded,
     IResult,
@@ -11,7 +11,9 @@ use crate::parser::ast::Tag;
 
 /// Parses a list of comma separated tags that begin with a ;. Tags can only include alphanumeric
 /// characters and hyphens to separate words.
-pub fn parse(input: &str) -> IResult<&str, Vec<Tag>> {
+pub fn parse<'a, E: ParseError<&'a str> + ContextError<&'a str>>(
+    input: &'a str,
+) -> IResult<&'a str, Vec<Tag>, E> {
     context(
         "status",
         map(
@@ -35,13 +37,16 @@ mod test {
 
     #[test]
     fn parses_single_tag() {
-        assert_eq!(parse(";single"), Ok(("", vec!["single".to_owned()])))
+        assert_eq!(
+            parse::<Error<&str>>(";single"),
+            Ok(("", vec!["single".to_owned()]))
+        )
     }
 
     #[test]
     fn parses_multiple_tags() {
         assert_eq!(
-            parse(";single,multiple"),
+            parse::<Error<&str>>(";single,multiple"),
             Ok(("", vec!["single".to_owned(), "multiple".to_owned()]))
         )
     }
@@ -49,7 +54,7 @@ mod test {
     #[test]
     fn parses_single_tag_with_hyphen() {
         assert_eq!(
-            parse(";single-tag"),
+            parse::<Error<&str>>(";single-tag"),
             Ok(("", vec!["single-tag".to_owned()]))
         )
     }
@@ -57,7 +62,7 @@ mod test {
     #[test]
     fn parses_multiple_tags_with_hyphen() {
         assert_eq!(
-            parse(";single-tag,multiple-tag"),
+            parse::<Error<&str>>(";single-tag,multiple-tag"),
             Ok(("", vec!["single-tag".to_owned(), "multiple-tag".to_owned()]))
         )
     }
@@ -65,7 +70,7 @@ mod test {
     #[test]
     fn parses_single_tag_with_numbers_and_hyphen() {
         assert_eq!(
-            parse(";single-tag-2021"),
+            parse::<Error<&str>>(";single-tag-2021"),
             Ok(("", vec!["single-tag-2021".to_owned()]))
         )
     }
@@ -73,7 +78,7 @@ mod test {
     #[test]
     fn parses_multiple_tags_with_numbers_and_hyphen() {
         assert_eq!(
-            parse(";single-tag-2021,multiple-tag-2021"),
+            parse::<Error<&str>>(";single-tag-2021,multiple-tag-2021"),
             Ok((
                 "",
                 vec!["single-tag-2021".to_owned(), "multiple-tag-2021".to_owned()]
@@ -84,7 +89,7 @@ mod test {
     #[test]
     fn errors_when_input_does_not_begin_with_semicolon() {
         assert_eq!(
-            parse("single"),
+            parse::<Error<&str>>("single"),
             Err(Err::Error(Error {
                 input: "single",
                 code: Tag
@@ -95,7 +100,7 @@ mod test {
     #[test]
     fn ignores_rest_of_input_if_contains_spaces() {
         assert_eq!(
-            parse(";single, with spaces"),
+            parse::<Error<&str>>(";single, with spaces"),
             Ok((", with spaces", vec!["single".to_owned()]))
         );
     }
