@@ -2,7 +2,7 @@ use nom::{
     bytes::complete::{tag, take_while1},
     character::complete::space0,
     combinator::{map, opt},
-    error::context,
+    error::{context, ContextError, ParseError},
     sequence::{preceded, tuple},
     IResult,
 };
@@ -10,7 +10,9 @@ use nom::{
 use crate::parser::ast::PayeeSectionType;
 
 /// Parses the section that include a payee and a description separated by a vertical bar.
-pub fn parse(input: &str) -> IResult<&str, PayeeSectionType> {
+pub fn parse<'a, E: ParseError<&'a str> + ContextError<&'a str>>(
+    input: &'a str,
+) -> IResult<&'a str, PayeeSectionType, E> {
     context(
         "payee | description",
         preceded(
@@ -36,7 +38,9 @@ pub fn parse(input: &str) -> IResult<&str, PayeeSectionType> {
     )(input)
 }
 
-fn spaced_alphanumeric1(input: &str) -> IResult<&str, String> {
+fn spaced_alphanumeric1<'a, E: ParseError<&'a str> + ContextError<&'a str>>(
+    input: &'a str,
+) -> IResult<&'a str, String, E> {
     context(
         "spaced alphanumeric",
         map(
@@ -48,22 +52,24 @@ fn spaced_alphanumeric1(input: &str) -> IResult<&str, String> {
 
 #[cfg(test)]
 mod test {
+    use nom::error::Error;
+
     use super::{parse, PayeeSectionType};
 
     #[test]
     fn parses_empty_payee_and_description() {
-        assert_eq!(parse(""), Ok(("", PayeeSectionType::Empty)))
+        assert_eq!(parse::<Error<&str>>(""), Ok(("", PayeeSectionType::Empty)))
     }
 
     #[test]
     fn parses_valid_input_with_payee_and_no_description() {
         assert_eq!(
-            parse("Test"),
+            parse::<Error<&str>>("Test"),
             Ok(("", PayeeSectionType::PayeeOnly("Test".to_owned())))
         );
 
         assert_eq!(
-            parse("Test with spaces"),
+            parse::<Error<&str>>("Test with spaces"),
             Ok((
                 "",
                 PayeeSectionType::PayeeOnly("Test with spaces".to_owned())
@@ -74,7 +80,7 @@ mod test {
     #[test]
     fn parses_valid_transaction_with_payee_and_description() {
         assert_eq!(
-            parse("Test | Test description"),
+            parse::<Error<&str>>("Test | Test description"),
             Ok((
                 "",
                 PayeeSectionType::PayeeAndDescription((
@@ -85,7 +91,7 @@ mod test {
         );
 
         assert_eq!(
-            parse("Test with spaces | Test description"),
+            parse::<Error<&str>>("Test with spaces | Test description"),
             Ok((
                 "",
                 PayeeSectionType::PayeeAndDescription((

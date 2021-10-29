@@ -1,7 +1,7 @@
 use nom::{
     character::complete::{alphanumeric1, char},
     combinator::{map, opt},
-    error::context,
+    error::{context, ContextError, ParseError},
     multi::many0,
     sequence::tuple,
     IResult,
@@ -10,7 +10,9 @@ use nom::{
 use super::ast::Account;
 
 /// Parses an account with the format "parent:child".
-pub fn parse(input: &str) -> IResult<&str, Account> {
+pub fn parse<'a, E: ParseError<&'a str> + ContextError<&'a str>>(
+    input: &'a str,
+) -> IResult<&'a str, Account, E> {
     context(
         "account",
         map(
@@ -43,7 +45,7 @@ mod test {
     #[test]
     fn parses_valid_parent_only_account() {
         assert_eq!(
-            parse("expenses"),
+            parse::<Error<&str>>("expenses"),
             Ok((
                 "",
                 Account {
@@ -57,7 +59,7 @@ mod test {
     #[test]
     fn parses_valid_parent_with_colon_but_no_child_account() {
         assert_eq!(
-            parse("expenses:"),
+            parse::<Error<&str>>("expenses:"),
             Ok((
                 "",
                 Account {
@@ -71,7 +73,7 @@ mod test {
     #[test]
     fn parses_valid_parent_single_child_account() {
         assert_eq!(
-            parse("expenses:food"),
+            parse::<Error<&str>>("expenses:food"),
             Ok((
                 "",
                 Account {
@@ -85,7 +87,7 @@ mod test {
     #[test]
     fn parses_valid_account_with_multiple_children() {
         assert_eq!(
-            parse("assets:savings:goals:test"),
+            parse::<Error<&str>>("assets:savings:goals:test"),
             Ok((
                 "",
                 Account {
@@ -99,7 +101,7 @@ mod test {
     #[test]
     fn parses_valid_account_with_numbers() {
         assert_eq!(
-            parse("expenses:travel:2021:10:test"),
+            parse::<Error<&str>>("expenses:travel:2021:10:test"),
             Ok((
                 "",
                 Account {
@@ -118,7 +120,7 @@ mod test {
     #[test]
     fn errors_when_empty() {
         assert_eq!(
-            parse(""),
+            parse::<Error<&str>>(""),
             Err(Err::Error(Error {
                 input: "",
                 code: AlphaNumeric
@@ -129,7 +131,7 @@ mod test {
     #[test]
     fn errors_when_starts_with_colon() {
         assert_eq!(
-            parse(":account"),
+            parse::<Error<&str>>(":account"),
             Err(Err::Error(Error {
                 input: ":account",
                 code: AlphaNumeric

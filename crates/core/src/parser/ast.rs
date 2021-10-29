@@ -1,6 +1,6 @@
-use chrono::{Date, Utc};
+use chrono::{Date, Datelike, Utc};
 use rust_decimal::Decimal;
-use std::fmt;
+use std::fmt::{self, Display};
 
 pub type CurrencyCode = String;
 pub type Description = String;
@@ -14,6 +14,21 @@ pub enum ParsedDate {
     /// Represents dates that omitted the year and were given a default one that should be
     /// switched to the journal year.
     Partial(Date<Utc>),
+}
+
+impl Display for ParsedDate {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            &ParsedDate::Full(date) => write!(f, "{}/{}", date.day(), date.month()),
+            &ParsedDate::Partial(date) => write!(f, "{}/{}", date.day(), date.month()),
+        }
+    }
+}
+
+impl Default for ParsedDate {
+    fn default() -> Self {
+        Self::Full(Utc::now().date())
+    }
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -39,7 +54,7 @@ impl fmt::Display for JournalElement {
 
 /// Represents an account that the journal includes. Accounts are created implicitly through their
 /// usage in transactions.
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct Account {
     pub name: String,
     pub children: Vec<String>,
@@ -61,7 +76,7 @@ pub enum PayeeSectionType {
 }
 
 /// Defines an account posting, which indicates either a positive or negative transfer to an account.
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct Posting {
     pub account: Account,
     pub amount: Option<Amount>,
@@ -74,8 +89,14 @@ pub enum TransactionStatus {
     Pending,
 }
 
+impl Default for TransactionStatus {
+    fn default() -> Self {
+        Self::Cleared
+    }
+}
+
 /// Represents a transaction that happened in an user's account.
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct Transaction {
     pub date: ParsedDate,
     pub status: TransactionStatus,

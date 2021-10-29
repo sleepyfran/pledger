@@ -4,7 +4,7 @@ use nom::{
     bytes::complete::take_while1,
     character::complete::multispace0,
     combinator::{map, map_res},
-    error::context,
+    error::{context, ContextError, FromExternalError, ParseError},
     sequence::terminated,
     IResult,
 };
@@ -12,7 +12,12 @@ use nom::{
 use crate::parser::ast::ParsedDate;
 
 /// Attempts to parse a date from the given input.
-pub fn parse(input: &str) -> IResult<&str, ParsedDate> {
+pub fn parse<
+    'a,
+    E: ParseError<&'a str> + ContextError<&'a str> + FromExternalError<&'a str, chrono::ParseError>,
+>(
+    input: &'a str,
+) -> IResult<&'a str, ParsedDate, E> {
     context(
         "date",
         terminated(
@@ -29,7 +34,13 @@ pub fn parse(input: &str) -> IResult<&str, ParsedDate> {
     )(input)
 }
 
-fn parse_full_date(separator: char, input: &str) -> IResult<&str, NaiveDate> {
+fn parse_full_date<
+    'a,
+    E: ParseError<&'a str> + ContextError<&'a str> + FromExternalError<&'a str, chrono::ParseError>,
+>(
+    separator: char,
+    input: &'a str,
+) -> IResult<&'a str, NaiveDate, E> {
     context(
         "full date",
         map_res(
@@ -39,7 +50,13 @@ fn parse_full_date(separator: char, input: &str) -> IResult<&str, NaiveDate> {
     )(input)
 }
 
-fn parse_partial_date(separator: char, input: &str) -> IResult<&str, NaiveDate> {
+fn parse_partial_date<
+    'a,
+    E: ParseError<&'a str> + ContextError<&'a str> + FromExternalError<&'a str, chrono::ParseError>,
+>(
+    separator: char,
+    input: &'a str,
+) -> IResult<&'a str, NaiveDate, E> {
     context(
         "partial date",
         map_res(
@@ -92,44 +109,62 @@ mod tests {
     #[test]
     fn parses_full_hyphen_separated_date() {
         let (input, expected_date) = get_full_test_date('-');
-        assert_eq!(parse(&input), Ok(("", ParsedDate::Full(expected_date))))
+        assert_eq!(
+            parse::<Error<&str>>(&input),
+            Ok(("", ParsedDate::Full(expected_date)))
+        )
     }
 
     #[test]
     fn parses_full_period_separated_date() {
         let (input, expected_date) = get_full_test_date('.');
-        assert_eq!(parse(&input), Ok(("", ParsedDate::Full(expected_date))))
+        assert_eq!(
+            parse::<Error<&str>>(&input),
+            Ok(("", ParsedDate::Full(expected_date)))
+        )
     }
 
     #[test]
     fn parses_full_slash_separated_date() {
         let (input, expected_date) = get_full_test_date('/');
-        assert_eq!(parse(&input), Ok(("", ParsedDate::Full(expected_date))))
+        assert_eq!(
+            parse::<Error<&str>>(&input),
+            Ok(("", ParsedDate::Full(expected_date)))
+        )
     }
 
     #[test]
     fn parses_partial_hyphen_separated_date() {
         let (input, expected_date) = get_partial_test_date('-');
-        assert_eq!(parse(&input), Ok(("", ParsedDate::Partial(expected_date))))
+        assert_eq!(
+            parse::<Error<&str>>(&input),
+            Ok(("", ParsedDate::Partial(expected_date)))
+        )
     }
 
     #[test]
     fn parses_partial_period_separated_date() {
         let (input, expected_date) = get_partial_test_date('.');
-        assert_eq!(parse(&input), Ok(("", ParsedDate::Partial(expected_date))))
+        assert_eq!(
+            parse::<Error<&str>>(&input),
+            Ok(("", ParsedDate::Partial(expected_date)))
+        )
     }
 
     #[test]
     fn parses_partial_slash_separated_date() {
         let (input, expected_date) = get_partial_test_date('/');
-        assert_eq!(parse(&input), Ok(("", ParsedDate::Partial(expected_date))))
+        assert_eq!(
+            parse::<Error<&str>>(&input),
+            Ok(("", ParsedDate::Partial(expected_date)))
+        )
     }
 
     #[test]
     fn parses_date_and_returns_rest_of_line() {
         let (input, expected_date) = get_full_test_date('-');
         assert_eq!(
-            parse(&format!("{} test", input)),
+            parse::<Error<&str>>(&format!("{} test", input)),
             Ok(("test", ParsedDate::Full(expected_date)))
         )
     }
@@ -137,7 +172,7 @@ mod tests {
     #[test]
     fn errors_when_empty() {
         assert_eq!(
-            parse(""),
+            parse::<Error<&str>>(""),
             Err(Err::Error(Error {
                 input: "",
                 code: TakeWhile1
@@ -148,7 +183,7 @@ mod tests {
     #[test]
     fn errors_when_date_starts_with_space() {
         assert_eq!(
-            parse(" 2021-10-07"),
+            parse::<Error<&str>>(" 2021-10-07"),
             Err(Err::Error(Error {
                 input: " 2021-10-07",
                 code: TakeWhile1
@@ -159,7 +194,7 @@ mod tests {
     #[test]
     fn errors_when_date_is_invalid() {
         assert_eq!(
-            parse("2020#02#01"),
+            parse::<Error<&str>>("2020#02#01"),
             Err(Err::Error(Error {
                 input: "2020#02#01",
                 code: MapRes
