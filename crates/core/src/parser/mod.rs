@@ -9,7 +9,7 @@ use nom::Finish;
 
 mod account;
 mod amount;
-mod ast;
+pub mod ast;
 mod comment;
 mod common;
 mod journal_year;
